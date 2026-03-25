@@ -3,9 +3,17 @@
   font-family: "Poppins", sans-serif;
 }
 
+/* 🔥 Top bar (heading + button) */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
 /* heading */
 .explore h2 {
-  margin-bottom: 25px;
+  margin: 0; /* ✅ fixed alignment issue */
   color: #6c4cff;
 }
 
@@ -61,7 +69,7 @@
   font-weight: 600;
 }
 
-/* match form and buttons */
+/* inputs (match page also) */
 .explore textarea,
 .explore input[type="text"],
 .explore input[type="number"] {
@@ -76,6 +84,7 @@
   background: #faf8ff;
 }
 
+/* main button */
 .explore button.hire-btn {
   background: #6c4cff;
   color: #fff;
@@ -84,13 +93,22 @@
   border-radius: 22px;
   cursor: pointer;
   font-weight: 700;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease; /* ✅ smoother animation */
 }
 
+/* hover */
 .explore button.hire-btn:hover {
   background: #5a3fff;
+  transform: scale(1.05); /* 🔥 small zoom effect */
 }
 
+/* 🔥 Top button special style */
+.top-bar .hire-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+/* card button */
 .card button {
   background: #6c4cff;
   color: white;
@@ -102,4 +120,15 @@
 
 .card button:hover {
   background: #5a3fff;
+}
+
+/* ✅ loading center */
+.loading {
+  text-align: center;
+  margin-top: 50px;
+}
+
+/* ✅ error text */
+.error {
+  color: red;
 }

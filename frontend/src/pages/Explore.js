@@ -53,7 +53,7 @@ export default function Explore() {
 
   if (loading) {
     return (
-      <div className="explore" style={{ textAlign: "center", marginTop: "50px" }}>
+      <div className="explore loading">
         <h2>Loading freelancers...</h2>
       </div>
     );
@@ -61,7 +61,18 @@ export default function Explore() {
 
   return (
     <div className="explore">
-      <h2>Explore Freelancers</h2>
+
+      {/* Top bar */}
+      <div className="top-bar">
+        <h2>Explore Freelancers</h2>
+
+        <button
+          className="hire-btn"
+          onClick={() => navigate("/match")}
+        >
+          Find Freelancer
+        </button>
+      </div>
 
       <input
         className="search"
@@ -71,7 +82,7 @@ export default function Explore() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       <div className="card-grid">
         {filteredFreelancers.map((freelancer) => (

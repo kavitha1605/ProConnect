@@ -1,20 +1,21 @@
 import axios from "axios";
+
 const BASE_URL = "http://localhost:5000/api";
 
 // ===== USERS =====
 
-// Create a new user (register)
+// Register
 export const createUser = async (userData) => {
   try {
-    const res = await axios.post("http://localhost:5000/api/users/register", userData);
-    return res.data.user; // <-- return only the "user" object
+    const res = await axios.post(`${BASE_URL}/users/register`, userData);
+    return res.data.user;
   } catch (err) {
     console.error("createUser error:", err.response?.data || err.message);
-    return null; // triggers "Registration failed" if API fails
+    return null;
   }
 };
 
-// Login user
+// Login
 export async function loginUser(credentials) {
   try {
     const res = await fetch(`${BASE_URL}/users/login`, {
@@ -22,7 +23,9 @@ export async function loginUser(credentials) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(credentials),
     });
+
     if (!res.ok) throw new Error("Login failed");
+
     return await res.json();
   } catch (err) {
     console.error(err);
@@ -31,6 +34,7 @@ export async function loginUser(credentials) {
 }
 
 // ===== BOOKINGS =====
+
 export async function createBooking(bookingData) {
   try {
     const res = await fetch(`${BASE_URL}/bookings`, {
@@ -38,7 +42,9 @@ export async function createBooking(bookingData) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(bookingData),
     });
-    if (!res.ok) throw new Error("Booking creation failed");
+
+    if (!res.ok) throw new Error("Booking failed");
+
     return await res.json();
   } catch (err) {
     console.error(err);
@@ -52,8 +58,11 @@ export async function getBookings(userId, role = "client") {
       role === "client"
         ? `${BASE_URL}/bookings/client/${userId}`
         : `${BASE_URL}/bookings/freelancer/${userId}`;
+
     const res = await fetch(endpoint);
-    if (!res.ok) throw new Error("Failed to fetch bookings");
+
+    if (!res.ok) throw new Error("Fetch bookings failed");
+
     return await res.json();
   } catch (err) {
     console.error(err);
@@ -62,6 +71,7 @@ export async function getBookings(userId, role = "client") {
 }
 
 // ===== DOUBTS =====
+
 export async function postDoubt(doubtData) {
   try {
     const res = await fetch(`${BASE_URL}/doubts`, {
@@ -69,7 +79,9 @@ export async function postDoubt(doubtData) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(doubtData),
     });
-    if (!res.ok) throw new Error("Failed to post doubt");
+
+    if (!res.ok) throw new Error("Post doubt failed");
+
     return await res.json();
   } catch (err) {
     console.error(err);
@@ -77,11 +89,14 @@ export async function postDoubt(doubtData) {
   }
 }
 
-// ===== USERS LIST (optional) =====
+// ===== USERS LIST =====
+
 export async function getUsers() {
   try {
     const res = await fetch(`${BASE_URL}/users`);
-    if (!res.ok) throw new Error("Failed to fetch users");
+
+    if (!res.ok) throw new Error("Fetch users failed");
+
     return await res.json();
   } catch (err) {
     console.error(err);
@@ -90,11 +105,15 @@ export async function getUsers() {
 }
 
 // ===== FREELANCERS =====
+
 export async function getFreelancers(filters = {}) {
   try {
     const queryString = new URLSearchParams(filters).toString();
+
     const res = await fetch(`${BASE_URL}/freelancers?${queryString}`);
-    if (!res.ok) throw new Error("Failed to fetch freelancers");
+
+    if (!res.ok) throw new Error("Fetch freelancers failed");
+
     return await res.json();
   } catch (err) {
     console.error(err);
@@ -105,10 +124,10 @@ export async function getFreelancers(filters = {}) {
 export async function getFreelancerById(id) {
   try {
     const res = await fetch(`${BASE_URL}/freelancers/${id}`);
-    if (res.status === 404) {
-      return null;
-    }
-    if (!res.ok) throw new Error("Failed to fetch freelancer");
+
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error("Fetch freelancer failed");
+
     return await res.json();
   } catch (err) {
     console.error(err);
@@ -116,20 +135,38 @@ export async function getFreelancerById(id) {
   }
 }
 
+// ===== 🔥 AI MATCH (DEBUG VERSION) =====
+
 export async function matchFreelancers(matchData) {
   try {
-    const res = await fetch(`${BASE_URL}/freelancers/match`, {
+    console.log("Sending match request:", matchData); // ✅ DEBUG
+
+    const res = await fetch(`${BASE_URL}/match`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(matchData),
     });
-    if (!res.ok) throw new Error("Failed to match freelancers");
-    return await res.json();
+
+    console.log("Response status:", res.status); // ✅ DEBUG
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Server error:", text); // ✅ DEBUG
+      throw new Error("Failed to match freelancers");
+    }
+
+    const data = await res.json();
+    console.log("Match response:", data); // ✅ DEBUG
+
+    return data;
+
   } catch (err) {
-    console.error(err);
+    console.error("Match error:", err);
     return { query: matchData.clientText, matches: [] };
   }
 }
+
+// ===== FRAUD CHECK =====
 
 export async function fraudCheckFreelancer(profile) {
   try {
@@ -138,11 +175,19 @@ export async function fraudCheckFreelancer(profile) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(profile),
     });
-    if (!res.ok) throw new Error("Failed fraud check");
+
+    if (!res.ok) throw new Error("Fraud check failed");
+
     return await res.json();
   } catch (err) {
     console.error(err);
-    return { profile, fraudCheck: { risk: "unknown", riskScore: 0, reasons: [err.message] } };
+    return {
+      profile,
+      fraudCheck: {
+        risk: "unknown",
+        riskScore: 0,
+        reasons: [err.message],
+      },
+    };
   }
 }
-
