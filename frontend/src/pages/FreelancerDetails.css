@@ -1,0 +1,111 @@
+.details {
+  padding: 80px 8%;
+  display: flex;
+  justify-content: center;
+  font-family: "Poppins", sans-serif;
+}
+
+/* card */
+.details-card {
+  width: 100%;
+  max-width: 800px;
+  background: linear-gradient(135deg, #f5f3ff, #ebe8ff);
+  padding: 50px;
+  border-radius: 22px;
+  box-shadow: 0 12px 30px rgba(108, 76, 255, 0.15);
+}
+
+/* profile header */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+/* avatar */
+.avatar-big {
+  width: 90px;
+  height: 90px;
+  background: #6c4cff;
+  color: white;
+  font-size: 36px;
+  font-weight: bold;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* profile info */
+.profile-info h2 {
+  margin: 0;
+}
+
+.role {
+  color: #666;
+  margin-top: 4px;
+}
+
+.rating {
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.experience {
+  color: #888;
+  font-size: 14px;
+}
+
+/* about */
+.about {
+  margin: 25px 0;
+}
+
+.about h3 {
+  margin-bottom: 10px;
+}
+
+/* skills */
+.skills {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+
+.skills span {
+  background: #e0dcff;
+  padding: 7px 16px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* hire section */
+.hire-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.price {
+  color: #6c4cff;
+  font-size: 22px;
+}
+
+/* hire button */
+.hire-btn {
+  background: #6c4cff;
+  color: white;
+  border: none;
+  padding: 10px 26px;
+  border-radius: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.hire-btn:hover {
+  background: #5a3fff;
+}

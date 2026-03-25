@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+body {
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #efe9ff, #d7ccff);
+}
+
+/* FULL PAGE CENTER */
+.login-wrapper {
+  min-height: calc(100vh - 80px); /* adjust if navbar height differs */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+/* REMOVE CLERK DEFAULT BOX STYLE */
+.clerk-card {
+  box-shadow: 0 15px 40px rgba(123, 77, 255, 0.2) !important;
+  border-radius: 20px !important;
+  padding: 40px 30px !important;
+  max-width: 400px !important;
+  width: 100% !important;
+}
+
+/* INPUT STYLE */
+.clerk-input {
+  width: 100% !important;
+  padding: 14px 16px !important;
+  margin-bottom: 20px !important;
+  border-radius: 12px !important;
+  border: 1px solid #ddd !important;
+  font-size: 16px !important;
+}
+
+.clerk-input:focus {
+  border-color: #7b4dff !important;
+  box-shadow: 0 4px 12px rgba(123, 77, 255, 0.2) !important;
+  outline: none !important;
+}
+
+/* BUTTON */
+.primary-btn {
+  width: 100%;
+  padding: 14px 0;
+  background: linear-gradient(135deg, #7b4dff, #a566ff);
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.primary-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(123, 77, 255, 0.35);
+}

@@ -1,0 +1,14 @@
+/* FULL PAGE CENTER */
+.register-wrapper {
+  min-height: calc(100vh - 80px); /* adjust if navbar height changes */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #f5f3ff, #ede9fe, #e9d5ff);
+  padding: 40px 20px;
+}
+
+/* Remove any default section padding issues */
+section {
+  padding: 0;
+}

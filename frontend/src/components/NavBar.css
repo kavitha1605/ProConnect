@@ -1,0 +1,144 @@
+/* ================= NAVBAR CONTAINER ================= */
+
+.navbar {
+  height: 72px;
+  padding: 0 8%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  font-family: "Poppins", sans-serif;
+
+  /* your violet gradient (cleaned) */
+  background: linear-gradient(135deg, #efe9ff, #dcd6f7);
+
+  /* depth */
+  box-shadow: 0 4px 18px rgba(108, 76, 255, 0.12);
+
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+
+/* ================= LOGO ================= */
+
+.logo {
+  font-size: 26px;
+  font-weight: 800;
+  color: #6c4cff;
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  transition: 0.25s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}
+
+
+/* ================= CENTER LINKS ================= */
+
+.navbar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 38px;
+}
+
+/* ================= CENTER LINKS (PROFESSIONAL STYLE) ================= */
+
+.nav-link {
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: #444;
+
+  padding: 8px 16px;
+  border-radius: 20px;
+
+  transition: all 0.25s ease;
+}
+
+/* remove underline effect completely */
+.nav-link::after {
+  display: none;
+}
+
+/* hover = soft violet pill */
+.nav-link:hover {
+  background: rgba(108, 76, 255, 0.12);
+  color: #6c4cff;
+}
+
+
+/* ================= RIGHT SIDE ================= */
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px; /* tighter spacing */
+}
+
+
+/* ================= BUTTON BASE ================= */
+
+.btn {
+  padding: 8px 20px;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: all 0.25s ease;
+}
+
+
+/* ================= LOGIN BUTTON ================= */
+
+.login-btn {
+  background: transparent;
+  border: 2px solid #6c4cff;
+  color: #6c4cff;
+}
+
+.login-btn:hover {
+  background: #6c4cff;
+  color: white;
+  transform: translateY(-2px);
+}
+
+
+/* ================= REGISTER BUTTON ================= */
+
+.register-btn {
+  background: linear-gradient(90deg, #7b5cff, #a855f7);
+  color: white;
+  border: none;
+}
+
+.register-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(108, 76, 255, 0.35);
+}
+
+
+/* ================= CLERK PROFILE BUTTON ================= */
+/* works nicely with Clerk's UserButton */
+
+.navbar-right img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.navbar-right img:hover {
+  transform: scale(1.08);
+}

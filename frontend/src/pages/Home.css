@@ -1,0 +1,358 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:"Poppins",sans-serif;
+background:linear-gradient(135deg,#f5f3ff,#ede9fe);
+}
+
+/* ================= HERO ================= */
+
+/* ================= HERO ================= */
+
+.hero{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+}
+
+/* main layout */
+.hero-content{
+  display:flex;
+  align-items:center;
+  width:100%;
+}
+
+/* IMAGE LEFT CORNER */
+.hero-image{
+  flex:1;
+  margin-left:0;
+}
+
+.hero-image img{
+  width:480px;
+  display:block;
+}
+
+/* TEXT SIDE */
+.hero-text{
+  flex:1;
+  padding-right:8%;
+}
+
+.hero-text h1{
+  font-size:60px;
+  font-weight:800;
+  line-height:1.2;
+}
+
+.hero-text span{
+  color:#7b4dff;
+}
+
+.hero-text p{
+  margin:20px 0 30px;
+  font-size:18px;
+  color:#555;
+}
+
+.hero-buttons{
+  display:flex;
+  gap:20px;
+}
+
+/* Buttons */
+
+.primary{
+padding:15px 40px;
+background:linear-gradient(135deg,#7b4dff,#a566ff);
+border:none;
+color:white;
+border-radius:50px;
+font-weight:600;
+cursor:pointer;
+transition:0.3s;
+}
+
+.primary:hover{
+transform:translateY(-3px);
+box-shadow:0 8px 20px rgba(123,77,255,0.3);
+}
+
+.secondary{
+padding:15px 40px;
+border:2px solid #7b4dff;
+background:transparent;
+color:#7b4dff;
+border-radius:50px;
+font-weight:600;
+cursor:pointer;
+transition:0.3s;
+}
+
+.secondary:hover{
+background:#7b4dff;
+color:white;
+}
+
+/* ================= FEATURES ================= */
+
+.features{
+padding:60px 8%;
+text-align:center;
+}
+
+.features h2{
+font-size:32px;
+color:#4b1fc3;
+margin-bottom:40px;
+}
+
+.features-cards{
+display:flex;
+flex-wrap:wrap;
+gap:25px;
+justify-content:center;
+}
+
+.feature-card{
+background:white;
+padding:25px;
+border-radius:20px;
+min-width:250px;
+max-width:300px;
+box-shadow:0 8px 20px rgba(0,0,0,0.08);
+transition:0.3s;
+}
+
+.feature-card:hover{
+transform:translateY(-5px);
+box-shadow:0 12px 25px rgba(123,77,255,0.3);
+}
+
+.feature-card h3{
+margin-bottom:15px;
+color:#7b4dff;
+}
+
+/* ================= HOW IT WORKS ================= */
+
+.how-it-works{
+padding:60px 8%;
+text-align:center;
+background:#ede9fe;
+}
+
+.steps{
+display:flex;
+gap:25px;
+flex-wrap:wrap;
+justify-content:center;
+}
+
+.step{
+background:white;
+padding:25px;
+border-radius:20px;
+min-width:250px;
+max-width:300px;
+box-shadow:0 8px 20px rgba(0,0,0,0.08);
+transition:0.3s;
+}
+
+.step:hover{
+transform:translateY(-5px);
+box-shadow:0 12px 25px rgba(123,77,255,0.3);
+}
+
+.step h3{
+margin-bottom:10px;
+color:#7b4dff;
+}
+
+/* ================= CTA ================= */
+
+.cta-banner{
+padding:60px 8%;
+text-align:center;
+background:linear-gradient(135deg,#7b4dff,#a566ff);
+color:white;
+border-radius:20px;
+}
+
+.cta-banner button{
+margin-top:20px;
+}
+
+.cta-banner .primary{
+background:#ece9e9;
+color:rgb(216,92,192);
+}
+
+.cta-banner .primary:hover{
+background:#f4f0f1;
+}
+
+/* ================= DASHBOARD ================= */
+
+.dashboard{
+min-height:100vh;
+padding:60px 8%;
+display:flex;
+flex-direction:column;
+gap:40px;
+}
+
+.dashboard-top{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.logout-btn{
+padding:10px 25px;
+background:#ef4444;
+color:white;
+border:none;
+border-radius:30px;
+cursor:pointer;
+}
+
+.logout-btn:hover{
+background:#dc2626;
+}
+
+/* Stats */
+
+.dashboard-stats{
+display:flex;
+gap:20px;
+flex-wrap:wrap;
+}
+
+.stat-card{
+flex:1;
+min-width:200px;
+background:linear-gradient(135deg,#7b4dff,#a566ff);
+color:white;
+padding:25px;
+border-radius:20px;
+text-align:center;
+}
+
+.stat-card p{
+font-size:28px;
+font-weight:700;
+margin-top:10px;
+}
+
+/* Quick Actions */
+
+.quick-actions{
+background:white;
+padding:25px;
+border-radius:20px;
+box-shadow:0 8px 20px rgba(0,0,0,0.08);
+}
+
+.quick-actions h3{
+font-size:22px;
+font-weight:600;
+margin-bottom:15px;
+}
+
+.quick-actions .actions{
+display:flex;
+gap:15px;
+flex-wrap:wrap;
+}
+
+.quick-actions button{
+flex:1;
+min-width:150px;
+padding:12px 25px;
+border:none;
+border-radius:40px;
+background:linear-gradient(135deg,#7b4dff,#a566ff);
+color:white;
+font-weight:600;
+cursor:pointer;
+transition:0.3s;
+}
+
+.quick-actions button:hover{
+transform:translateY(-3px);
+box-shadow:0 8px 20px rgba(123,77,255,0.3);
+}
+
+/* Recommended Freelancers */
+
+.recommended{
+display:flex;
+flex-direction:column;
+gap:15px;
+}
+
+.freelancer-list{
+display:flex;
+gap:15px;
+flex-wrap:wrap;
+}
+
+.freelancer-card{
+background:white;
+padding:20px;
+border-radius:20px;
+box-shadow:0 8px 20px rgba(0,0,0,0.08);
+cursor:pointer;
+transition:0.3s;
+flex:1;
+min-width:200px;
+text-align:center;
+}
+
+.freelancer-card:hover{
+transform:translateY(-5px);
+box-shadow:0 12px 25px rgba(123,77,255,0.3);
+}
+
+/* Notifications */
+
+.notifications{
+background:white;
+padding:25px;
+border-radius:20px;
+box-shadow:0 8px 20px rgba(0,0,0,0.08);
+}
+
+.notifications h3{
+font-size:22px;
+font-weight:600;
+margin-bottom:15px;
+}
+
+.notifications ul{
+list-style:none;
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+.notifications li{
+padding:12px 15px;
+border-radius:15px;
+background:linear-gradient(135deg,#ede9fe,#f5f3ff);
+font-weight:500;
+color:#555;
+transition:0.3s;
+}
+
+.notifications li:hover{
+background:linear-gradient(135deg,#7b4dff,#a566ff);
+color:white;
+}

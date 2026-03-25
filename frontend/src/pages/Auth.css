@@ -1,0 +1,15 @@
+.auth-hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+  background-color: #f0f2f5;
+}
+
+.auth-container {
+  width: 400px;
+  padding: 30px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}

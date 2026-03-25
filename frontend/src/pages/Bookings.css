@@ -1,0 +1,101 @@
+.booking {
+  display: flex;
+  justify-content: center;
+  padding: 60px 8%;
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #f5f3ff, #e9d5ff);
+  min-height: 100vh;
+}
+
+.booking-card {
+  width: 100%;
+  max-width: 550px;       /* slightly wider */
+  padding: 50px 40px;     /* more padding for spacious feel */
+  border-radius: 25px;
+  background: white;
+  box-shadow: 0 15px 40px rgba(123, 77, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 25px;              /* more spacing between fields */
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+
+.booking-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 50px rgba(123, 77, 255, 0.2);
+}
+
+.booking-card h2 {
+  text-align: center;
+  font-size: 28px;
+  color: #222;
+}
+
+.booking-card input,
+.booking-card textarea {
+  width:100%;
+  padding: 14px 18px;
+  border-radius: 15px;
+  border: 1px solid #ddd;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.booking-card input:focus,
+.booking-card textarea:focus {
+  border-color: #7b4dff;
+  box-shadow: 0 0 8px rgba(123, 77, 255, 0.2);
+}
+
+.booking-card textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.primary-btn {
+  padding: 16px;
+  border-radius: 50px;
+  border: none;
+  background: linear-gradient(135deg, #7b4dff, #a566ff);
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.primary-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 12px 30px rgba(123, 77, 255, 0.4);
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .booking-card {
+    padding: 40px 25px;
+  }
+}
+
+
+.budget-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.budget-input .rupee {
+  position: absolute;
+  left: 14px;
+  font-size: 18px;   /* slightly bigger */
+  color: #7b4dff;    /* matches theme gradient */
+  font-weight: 600;
+}
+
+
+.budget-input input {
+  padding-left: 50px; /* leave space for ₹ */
+}
+
+
