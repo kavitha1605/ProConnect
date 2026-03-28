@@ -22,7 +22,7 @@ export default function Navbar() {
       </div>
 
       {/* Right side auth */}
-      <div className="navbar-right">
+      <div className="navbar-right"> 
         <SignedOut>
           <Link to="/login" className="btn login-btn">Login</Link>
           <Link to="/register" className="btn register-btn">Register</Link>
