@@ -109,14 +109,17 @@ export async function getUsers() {
 export async function getFreelancers(filters = {}) {
   try {
     const queryString = new URLSearchParams(filters).toString();
+    const url = queryString
+      ? `${BASE_URL}/freelancers?${queryString}`
+      : `${BASE_URL}/freelancers`;
 
-    const res = await fetch(`${BASE_URL}/freelancers?${queryString}`);
+    const res = await fetch(url);
 
     if (!res.ok) throw new Error("Fetch freelancers failed");
 
     return await res.json();
   } catch (err) {
-    console.error(err);
+    console.error("getFreelancers error:", err);
     return [];
   }
 }
@@ -135,31 +138,19 @@ export async function getFreelancerById(id) {
   }
 }
 
-// ===== 🔥 AI MATCH (DEBUG VERSION) =====
+// ===== AI MATCH =====
 
 export async function matchFreelancers(matchData) {
   try {
-    console.log("Sending match request:", matchData); // ✅ DEBUG
-
-    const res = await fetch(`${BASE_URL}/match`, {
+    const res = await fetch(`${BASE_URL}/freelancers/match`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(matchData),
     });
 
-    console.log("Response status:", res.status); // ✅ DEBUG
+    if (!res.ok) throw new Error("Failed to match freelancers");
 
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("Server error:", text); // ✅ DEBUG
-      throw new Error("Failed to match freelancers");
-    }
-
-    const data = await res.json();
-    console.log("Match response:", data); // ✅ DEBUG
-
-    return data;
-
+    return await res.json();
   } catch (err) {
     console.error("Match error:", err);
     return { query: matchData.clientText, matches: [] };

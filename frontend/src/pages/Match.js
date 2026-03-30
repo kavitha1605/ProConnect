@@ -1,126 +1,197 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { matchFreelancers } from "../api";
+import { matchFreelancers, fraudCheckFreelancer } from "../api";
 import "./Explore.css";
 
 export default function Match() {
-  const [query, setQuery] = useState("");
-  const [budget, setBudget] = useState(0);
-  const [experience, setExperience] = useState(0);
-  const [skills, setSkills] = useState("");
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
   const navigate = useNavigate();
 
+  const [clientText, setClientText] = useState("");
+  const [budget, setBudget] = useState("");
+  const [experience, setExperience] = useState("");
+  const [skills, setSkills] = useState("");
+
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [fraudLoadingId, setFraudLoadingId] = useState(null);
+  const [fraudResults, setFraudResults] = useState({});
+
   const handleMatch = async () => {
-    setError(null);
-
-    if (!query) {
-      setError("Write your project requirements for matching.");
-      return;
-    }
-
     setLoading(true);
+    setHasSearched(true);
 
-    try {
-      const payload = {
-        clientText: query,
-        budget: budget || null,
-        experience: experience || null,
-        desiredSkills: skills
-          ? skills.split(",").map((s) => s.trim().toLowerCase())
-          : [],
-      };
+    const desiredSkills = skills
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
 
-      const response = await matchFreelancers(payload);
+    const data = await matchFreelancers({
+      clientText,
+      budget: Number(budget),
+      experience: Number(experience),
+      desiredSkills,
+    });
 
-      // ✅ Remove alert completely
-      // alert(JSON.stringify(response, null, 2));
+    const top3 = (data.matches || []).slice(0, 3).map((f) => ({
+      ...f,
+      id: f.freelancerId,
+      skill: f.role || f.matchedSkills?.[0] || "Freelancer",
+      rate: `$${f.hourlyRate || 0}/hr`,
+      rating:
+        typeof f.rating === "number" ? `⭐ ${f.rating}` : f.rating || "⭐ 5.0",
+    }));
 
-      // Directly set results to render cards
-      setResults(response.matches || []);
-    } catch (err) {
-      setError(err.message || "Unable to match freelancers.");
-    } finally {
-      setLoading(false);
+    setMatches(top3);
+    setLoading(false);
+  };
+
+  const handleFraudCheck = async (freelancer) => {
+    setFraudLoadingId(freelancer.freelancerId);
+
+    const result = await fraudCheckFreelancer({
+      id: freelancer.freelancerId,
+      name: freelancer.name,
+      email: freelancer.email,
+      skills: freelancer.matchedSkills || [],
+      experienceYears: freelancer.experienceYears,
+      rating: freelancer.rating,
+      socialLinks: freelancer.socialLinks || [],
+      hourlyRate: freelancer.hourlyRate || 0,
+    });
+
+    setFraudResults((prev) => ({
+      ...prev,
+      [freelancer.freelancerId]: result.fraudCheck,
+    }));
+
+    setFraudLoadingId(null);
+  };
+
+  const getRiskColor = (risk) => {
+    switch (risk) {
+      case "low":
+        return "#2e7d32";
+      case "medium":
+        return "#f57c00";
+      case "high":
+        return "#d32f2f";
+      default:
+        return "#666";
     }
   };
 
   return (
     <div className="explore">
-      <h2>AI Profile Matching</h2>
+      <div className="top-bar">
+        <h2>Find Best Match</h2>
+      </div>
 
       <textarea
+        rows="4"
         placeholder="Describe your project..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        value={clientText}
+        onChange={(e) => setClientText(e.target.value)}
       />
 
       <input
         type="number"
-        placeholder="Max budget ($)"
+        placeholder="Budget ($/hr)"
         value={budget}
-        onChange={(e) => setBudget(Number(e.target.value))}
+        onChange={(e) => setBudget(e.target.value)}
       />
 
       <input
         type="number"
-        placeholder="Experience (years)"
+        placeholder="Minimum Experience (years)"
         value={experience}
-        onChange={(e) => setExperience(Number(e.target.value))}
+        onChange={(e) => setExperience(e.target.value)}
       />
 
       <input
         type="text"
-        placeholder="Skills (comma-separated)"
+        placeholder="Skills (comma separated: React, Node.js, UI/UX)"
         value={skills}
         onChange={(e) => setSkills(e.target.value)}
       />
 
       <button className="hire-btn" onClick={handleMatch}>
-        {loading ? "Matching..." : "Find best freelancers"}
+        {loading ? "Matching..." : "Find Best Match"}
       </button>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {hasSearched && (
+        <div className="card-grid" style={{ marginTop: "30px" }}>
+          {matches.length > 0 ? (
+            matches.map((freelancer) => {
+              const fraud = fraudResults[freelancer.freelancerId];
 
-      {/* ⭐ Best Match */}
-      {results.length > 0 && (
-        <h3 style={{ color: "#6c4cff", marginTop: "20px" }}>
-          ⭐ Best Match: {results[0].name}
-        </h3>
-      )}
+              return (
+                <div className="card" key={freelancer.freelancerId}>
+                  <div className="avatar">{freelancer.name?.charAt(0)}</div>
 
-      {/* Results Cards */}
-      {results.length > 0 && (
-        <div className="card-grid" style={{ marginTop: "20px" }}>
-          {results.map((item) => (
-            <div className="card" key={item.freelancerId}>
-              <div className="avatar">{item.name.charAt(0)}</div>
+                  <h3>{freelancer.name}</h3>
+                  <p>{freelancer.skill}</p>
+                  <span>{freelancer.rating}</span>
+                  <p className="rate">{freelancer.rate}</p>
 
-              <h3>{item.name}</h3>
-              <p><strong>Score:</strong> {item.score}</p>
-              <p>
-                <strong>Skills:</strong>{" "}
-                {item.matchedSkills && item.matchedSkills.length > 0
-                  ? item.matchedSkills.join(", ")
-                  : "None"}
-              </p>
+                  <p>
+                    <strong>Matched Skills:</strong>{" "}
+                    {freelancer.matchedSkills?.length > 0
+                      ? freelancer.matchedSkills.join(", ")
+                      : "No exact skill match"}
+                  </p>
 
-              <button
-                className="hire-btn"
-                onClick={() => navigate(`/freelancer/${item.freelancerId}`)}
-              >
-                View Profile
-              </button>
-            </div>
-          ))}
+                  <p>
+                    <strong>Experience:</strong> {freelancer.experienceYears || 0} Years
+                  </p>
+
+                  <p>
+                    <strong>Match Score:</strong> {freelancer.score}
+                  </p>
+
+                  {fraud && (
+                    <div
+                      className="fraud-badge"
+                      style={{
+                        backgroundColor: getRiskColor(fraud.risk),
+                      }}
+                    >
+                      {fraud.risk.toUpperCase()} RISK ({fraud.riskScore})
+                    </div>
+                  )}
+
+                  <div className="card-buttons">
+                    <button
+                      className="fraud-btn"
+                      onClick={() => handleFraudCheck(freelancer)}
+                      disabled={fraudLoadingId === freelancer.freelancerId}
+                    >
+                      {fraudLoadingId === freelancer.freelancerId
+                        ? "Checking..."
+                        : "Run Fraud Check"}
+                    </button>
+
+                    <button
+                      className="hire-btn"
+                      onClick={() =>
+                        navigate(`/freelancer/${freelancer.freelancerId}`)
+                      }
+                      disabled={fraud?.risk === "high"}
+                      style={{
+                        opacity: fraud?.risk === "high" ? 0.6 : 1,
+                        cursor: fraud?.risk === "high" ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {fraud?.risk === "high" ? "Blocked" : "Hire"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            !loading && <p style={{ marginTop: "20px" }}>No matches found.</p>
+          )}
         </div>
-      )}
-
-      {results.length === 0 && !loading && (
-        <p style={{ marginTop: "20px" }}>No matches yet.</p>
       )}
     </div>
   );
