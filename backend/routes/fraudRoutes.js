@@ -16,6 +16,8 @@ function evaluateFraudRisk(profile) {
   let score = 0;
 
   const emailDomain = profile.email?.split("@").pop()?.toLowerCase();
+
+  // 1. Missing / suspicious email
   if (!emailDomain) {
     reasons.push("Missing email domain");
     score += 20;
@@ -24,20 +26,46 @@ function evaluateFraudRisk(profile) {
     score += 50;
   }
 
-  const isProfileComplete = Boolean(profile.name && profile.skills?.length && profile.experienceYears >= 0);
+  // 2. Incomplete profile
+  const isProfileComplete = Boolean(
+    profile.name &&
+      profile.skills?.length &&
+      profile.experienceYears >= 0
+  );
+
   if (!isProfileComplete) {
     reasons.push("Incomplete profile fields");
     score += 30;
   }
 
-  if (profile.rating < 3) {
+  // 3. Low rating
+  if (profile.rating && profile.rating < 3) {
     reasons.push("Low rating");
     score += 20;
   }
 
+  // 4. No social links
   if (!profile.socialLinks || profile.socialLinks.length < 1) {
     reasons.push("No social profiles linked");
     score += 10;
+  }
+
+  // 5. Very few skills
+  if (!profile.skills || profile.skills.length < 2) {
+    reasons.push("Very few skills listed");
+    score += 10;
+  }
+
+  // 6. Unrealistic hourly rate
+  if (profile.hourlyRate && profile.hourlyRate < 5) {
+    reasons.push("Unrealistically low hourly rate");
+    score += 15;
+  }
+
+  // 7. Very low experience but high claims (basic AI-like logic)
+  if (profile.experienceYears === 0 && profile.skills?.length > 4) {
+    reasons.push("Skill list does not match experience level");
+    score += 15;
   }
 
   const rounded = Math.min(100, score);
@@ -50,30 +78,37 @@ function evaluateFraudRisk(profile) {
   return { risk, riskScore: rounded, reasons };
 }
 
+// POST /api/fraud/check
 router.post("/check", async (req, res) => {
   try {
     const profile = req.body;
     let freelancer = null;
+
     if (profile.id) {
       try {
         freelancer = await Freelancer.findById(profile.id);
       } catch (findErr) {
-        // invalid ObjectId or missing freelancer; continue with provided profile
         freelancer = null;
       }
     }
 
-    const fullProfile = freelancer ? { ...freelancer.toObject(), ...profile } : profile;
+    const fullProfile = freelancer
+      ? { ...freelancer.toObject(), ...profile }
+      : profile;
+
     const result = evaluateFraudRisk(fullProfile);
 
-    // Optionally update status on freelancer
+    // optional status update
     if (freelancer) {
       if (result.risk === "high") freelancer.status = "pending";
       if (result.risk === "low") freelancer.status = "approved";
       await freelancer.save();
     }
 
-    res.json({ profile: fullProfile, fraudCheck: result });
+    res.json({
+      profile: fullProfile,
+      fraudCheck: result,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

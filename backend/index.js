@@ -104,7 +104,6 @@ app.post("/api/match", async (req, res) => {
       };
     });
 
-    // Keep only matched freelancers
     const filteredMatches = matches
       .filter(m => m.score > 0)
       .sort((a, b) => b.score - a.score);
