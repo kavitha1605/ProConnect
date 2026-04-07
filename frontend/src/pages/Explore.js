@@ -183,18 +183,10 @@ export default function Explore() {
               )}
 
               <div className="card-buttons">
-                <button
-                  className="fraud-btn"
-                  onClick={() => handleFraudCheck(freelancer)}
-                  disabled={checkingId === freelancer.id}
-                >
-                  {checkingId === freelancer.id ? "Checking..." : "Run Fraud Check"}
-                </button>
 
                 <button
                   className="hire-btn"
                   onClick={() => navigate(`/freelancer/${freelancer.id}`)}
-                  disabled={fraud?.risk === "high"}
                   style={{
                     opacity: fraud?.risk === "high" ? 0.6 : 1,
                     cursor: fraud?.risk === "high" ? "not-allowed" : "pointer",
