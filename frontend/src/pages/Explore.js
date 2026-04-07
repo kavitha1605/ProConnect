@@ -44,7 +44,7 @@ export default function Explore() {
       if (Array.isArray(data) && data.length > 0) {
         const formatted = data.map((f, index) => ({
           ...f,
-          id: f._id || f.id || index + 1,
+          id: f._id,
           skill: f.skill || f.role || f.skills?.[0] || "Freelancer",
           rate: `$${f.hourlyRate || 0}/hr`,
           rating: f.rating ? `⭐ ${f.rating}` : "⭐ 5.0",
@@ -64,7 +64,8 @@ export default function Explore() {
       console.error("API failed, using fallback:", err);
 
       // fallback if API fails
-      setFreelancers(fallbackFreelancers);
+      //setFreelancers(fallbackFreelancers);
+      setFreelancers([]);
     } finally {
       setLoading(false);
     }

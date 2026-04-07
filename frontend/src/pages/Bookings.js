@@ -43,12 +43,16 @@ export default function Bookings() {
         date: projectDate,
         budget: projectBudget,
       };
+      console.log("freelancerId:", freelancerId);
+      console.log("Type of freelancerId:", typeof freelancerId);
 
       const result = await createBooking(bookingData);
 
       if (result) {
         alert("Booking successful!");
         navigate("/dashboard-client");
+        console.log("Booking Data:", bookingData);
+        
       } else {
         alert("Booking failed!");
       }
