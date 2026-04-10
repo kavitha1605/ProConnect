@@ -9,7 +9,13 @@ import doubtRoutes from "./routes/doubtRoutes.js";
 import freelancerRoutes from "./routes/freelancerRoutes.js";
 import fraudRoutes from "./routes/fraudRoutes.js";
 
-dotenv.config();
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 app.use(express.json());
@@ -19,7 +25,10 @@ app.use(cors());
 // MongoDB Connection
 // =========================
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Atlas connected"))
+  .then(() => {
+    console.log("MongoDB Atlas connected");
+    console.log("Connected DB:", mongoose.connection.name); // 👈 ADD THIS
+  })
   .catch(err => console.log("MongoDB connection error:", err));
 
 // =========================

@@ -12,7 +12,7 @@ export default function MyBookings() {
   useEffect(() => {
     async function fetchBookings() {
       try {
-        const res = await fetch(`/api/my-bookings/${user.id}`);
+        const res = await fetch(`/api/bookings/client/${user.id}`);
         const data = await res.json();
         setBookings(data);
       } catch (err) {

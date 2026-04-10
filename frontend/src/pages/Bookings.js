@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
-import { createBooking } from "../api";
 import "./Bookings.css";
 
 export default function Bookings() {
@@ -16,7 +15,7 @@ export default function Bookings() {
   const [projectDate, setProjectDate] = useState("");
   const [projectBudget, setProjectBudget] = useState("");
 
-  // ✅ Check Clerk authentication
+  // ✅ Auth check
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -35,27 +34,45 @@ export default function Bookings() {
     }
 
     try {
+      // 🔥 Fetch freelancer details
+      const resFreelancer = await fetch(`/api/freelancers/${freelancerId}`);
+      const freelancer = await resFreelancer.json();
+
+      // ✅ Booking data with required fields
       const bookingData = {
         freelancerId,
-        userId: user.id, // Clerk user ID
+        userId: user.id,
         title: projectTitle,
         description: projectDescription,
         date: projectDate,
         budget: projectBudget,
+
+        // ✅ Important for MyBookings UI
+        freelancerName: freelancer.name,
+        skills: freelancer.skills ? freelancer.skills.join(", ") : "",
+        status: "Pending",
       };
-      console.log("freelancerId:", freelancerId);
-      console.log("Type of freelancerId:", typeof freelancerId);
 
-      const result = await createBooking(bookingData);
+      console.log("Booking Data:", bookingData);
 
-      if (result) {
+      // 🔥 Save booking
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bookingData),
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
         alert("Booking successful!");
-        navigate("/dashboard-client");
-        console.log("Booking Data:", bookingData);
-        
+        navigate("/my-bookings"); // ✅ go to bookings page
       } else {
-        alert("Booking failed!");
+        alert(result.error || "Booking failed!");
       }
+
     } catch (error) {
       console.error("Booking error:", error);
       alert("Something went wrong!");

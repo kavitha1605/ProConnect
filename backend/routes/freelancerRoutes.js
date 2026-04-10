@@ -1,30 +1,186 @@
 import express from "express";
+import mongoose from "mongoose";
 import Freelancer from "../models/Freelancer.js";
+import User from "../models/User.js";
+import verifyToken from "../middleware/auth.js";
+import verifyRole from "../middleware/verifyRole.js";
+import { uploadResume, uploadProject } from "../middleware/upload.js";
 
 const router = express.Router();
 
 // ==========================
-// CREATE FREELANCER
+// CREATE FREELANCER PROFILE
+// POST /api/freelancers/profile/create
+// Protected: Only freelancers
 // ==========================
-router.post("/", async (req, res) => {
+router.post("/profile/create", verifyToken, verifyRole(["freelancer"]), async (req, res) => {
   try {
-    const data = req.body;
-    data.profileComplete = Boolean(data.name && data.email && data.skills?.length);
-    const freelancer = new Freelancer(data);
+    const { name, email, skills, experienceYears, hourlyRate, about, location, socialLinks } = req.body;
+
+    // Validation
+    if (!name || !email || !skills || skills.length === 0) {
+      return res.status(400).json({ message: "Name, email, and skills are required" });
+    }
+
+    // Check if freelancer already exists for this user
+    const existingFreelancer = await Freelancer.findOne({ userId: req.user._id });
+    if (existingFreelancer) {
+      return res.status(400).json({ message: "Freelancer profile already exists for this user" });
+    }
+
+    const profileComplete = Boolean(name && email && skills.length > 0);
+
+    const freelancer = new Freelancer({
+      userId: req.user._id,
+      name,
+      email,
+      skills: Array.isArray(skills) ? skills : [skills],
+      experienceYears: experienceYears || 0,
+      hourlyRate: hourlyRate || 0,
+      about: about || "This freelancer has not added a description yet.",
+      location: location || "",
+      socialLinks: Array.isArray(socialLinks) ? socialLinks : [],
+      profileComplete,
+      verificationStatus: "pending",
+    });
+
     await freelancer.save();
-    res.status(201).json(freelancer);
+
+    res.status(201).json({
+      message: "Freelancer profile created successfully",
+      freelancer,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 // ==========================
-// LIST FREELANCERS
+// GET MY FREELANCER PROFILE
+// GET /api/freelancers/profile/me
+// Protected: Only freelancers
+// ==========================
+router.get("/profile/me", verifyToken, verifyRole(["freelancer"]), async (req, res) => {
+  try {
+    const freelancer = await Freelancer.findOne({ userId: req.user._id });
+
+    if (!freelancer) {
+      return res.status(404).json({ message: "Freelancer profile not found. Create one first." });
+    }
+
+    res.json(freelancer);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================
+// UPDATE FREELANCER PROFILE
+// PUT /api/freelancers/profile/update
+// Protected: Only freelancers (own profile)
+// ==========================
+router.put("/profile/update", verifyToken, verifyRole(["freelancer"]), async (req, res) => {
+  try {
+    const { name, skills, experienceYears, hourlyRate, about, location, socialLinks } = req.body;
+
+    const data = {
+      name,
+      skills: Array.isArray(skills) ? skills : [skills],
+      experienceYears,
+      hourlyRate,
+      about,
+      location,
+      socialLinks: Array.isArray(socialLinks) ? socialLinks : [],
+    };
+
+    data.profileComplete = Boolean(data.name && data.skills?.length > 0);
+
+    const freelancer = await Freelancer.findOneAndUpdate(
+      { userId: req.user._id },
+      data,
+      { new: true }
+    );
+
+    if (!freelancer) {
+      return res.status(404).json({ message: "Freelancer profile not found" });
+    }
+
+    res.json({
+      message: "Profile updated successfully",
+      freelancer,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================
+// DELETE FREELANCER PROFILE
+// DELETE /api/freelancers/profile/delete
+// Protected: Only freelancers (own profile)
+// ==========================
+router.delete("/profile/delete", verifyToken, verifyRole(["freelancer"]), async (req, res) => {
+  try {
+    const freelancer = await Freelancer.findOneAndDelete({
+      userId: req.user._id,
+    });
+
+    if (!freelancer) {
+      return res.status(404).json({ message: "Freelancer profile not found" });
+    }
+
+    res.json({ message: "Freelancer profile deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================
+// ADD PROJECT
+// POST /api/freelancers/project/add
+// Protected: Only freelancers
+// ==========================
+router.post("/project/add", verifyToken, verifyRole(["freelancer"]), async (req, res) => {
+  try {
+    const { title, description, url, fileUrl } = req.body;
+
+    if (!title || !description) {
+      return res.status(400).json({ message: "Title and description are required" });
+    }
+
+    const freelancer = await Freelancer.findOneAndUpdate(
+      { userId: req.user._id },
+      {
+        $push: {
+          projects: { title, description, url: url || "", fileUrl: fileUrl || "" },
+        },
+      },
+      { new: true }
+    );
+
+    if (!freelancer) {
+      return res.status(404).json({ message: "Freelancer profile not found" });
+    }
+
+    res.status(201).json({
+      message: "Project added successfully",
+      freelancer,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================
+// LIST VERIFIED FREELANCERS
+// GET /api/freelancers
+// No auth required (public)
 // ==========================
 router.get("/", async (req, res) => {
   try {
     const { q, minRate, maxRate, minExp, skill } = req.query;
-    const filter = { status: "approved" };
+
+    const filter = { verificationStatus: "verified" };
 
     if (q) {
       filter.$or = [
@@ -36,13 +192,25 @@ router.get("/", async (req, res) => {
     }
 
     if (skill) filter.skills = { $in: [skill] };
-    if (minRate) filter.hourlyRate = { ...filter.hourlyRate, $gte: Number(minRate) };
-    if (maxRate) filter.hourlyRate = { ...filter.hourlyRate, $lte: Number(maxRate) };
-    if (minExp) filter.experienceYears = { ...filter.experienceYears, $gte: Number(minExp) };
+
+    if (minRate) {
+      filter.hourlyRate = { ...filter.hourlyRate, $gte: Number(minRate) };
+    }
+
+    if (maxRate) {
+      filter.hourlyRate = { ...filter.hourlyRate, $lte: Number(maxRate) };
+    }
+
+    if (minExp) {
+      filter.experienceYears = {
+        ...filter.experienceYears,
+        $gte: Number(minExp),
+      };
+    }
 
     const freelancers = await Freelancer.find(filter).limit(100);
 
-    console.log("TOTAL APPROVED FREELANCERS:", freelancers.length);
+    console.log("TOTAL VERIFIED FREELANCERS:", freelancers.length);
 
     res.json(freelancers);
   } catch (err) {
@@ -51,14 +219,51 @@ router.get("/", async (req, res) => {
 });
 
 // ==========================
-// SEED SAMPLE FREELANCERS (ALL DOMAINS)
+// GET FREELANCER BY ID
+// GET /api/freelancers/:id
+// No auth required
 // ==========================
-router.get("/seed", async (req, res) => {
+router.get("/:id", async (req, res) => {
+  try {
+    const freelancer = await Freelancer.findById(req.params.id).populate("userId", "name email");
+
+    if (!freelancer) {
+      return res.status(404).json({ message: "Freelancer not found" });
+    }
+
+    res.json(freelancer);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================
+// SEED SAMPLE FREELANCERS
+// GET /api/freelancers/seed/data
+// ==========================
+router.get("/seed/data", async (req, res) => {
   try {
     await Freelancer.deleteMany({});
+    await mongoose.connection.db.collection('users').deleteMany({ email: /@proconnect\.test$/ });
+
+    // Create sample users first
+    const sampleUsers = [
+      { name: "Arjun Dev", email: "arjun@proconnect.test", password: "password123", role: "freelancer" },
+      { name: "Sneha Web", email: "sneha@proconnect.test", password: "password123", role: "freelancer" },
+      { name: "Rahul Node", email: "rahul@proconnect.test", password: "password123", role: "freelancer" },
+      { name: "Priya UX", email: "priya@proconnect.test", password: "password123", role: "freelancer" },
+      { name: "Karthik AI", email: "karthik@proconnect.test", password: "password123", role: "freelancer" },
+      { name: "Sanjay FullStack", email: "sanjay@proconnect.test", password: "password123", role: "freelancer" },
+      { name: "Nivetha MERN", email: "nivetha@proconnect.test", password: "password123", role: "freelancer" },
+      { name: "Meena Design", email: "meena@proconnect.test", password: "password123", role: "freelancer" },
+    ];
+
+    const createdUsers = await User.insertMany(sampleUsers);
+    console.log('Created users:', createdUsers.map(u => ({ id: u._id, name: u.name })));
 
     const sample = [
       {
+        userId: createdUsers[0]._id,
         name: "Arjun Dev",
         email: "arjun@proconnect.test",
         role: "React Developer",
@@ -67,11 +272,14 @@ router.get("/seed", async (req, res) => {
         hourlyRate: 25,
         rating: 4.8,
         about: "Frontend developer specializing in React applications and scalable UI systems.",
+        location: "Bangalore, India",
         socialLinks: ["https://linkedin.com/in/arjundev"],
-        status: "approved",
+        verificationStatus: "verified",
+        verificationScore: 92,
         profileComplete: true,
       },
       {
+        userId: createdUsers[1]._id,
         name: "Sneha Web",
         email: "sneha@proconnect.test",
         role: "Frontend Developer",
@@ -80,11 +288,14 @@ router.get("/seed", async (req, res) => {
         hourlyRate: 22,
         rating: 4.7,
         about: "Frontend developer creating responsive websites and landing pages.",
+        location: "Mumbai, India",
         socialLinks: ["https://linkedin.com/in/snehaweb"],
-        status: "approved",
+        verificationStatus: "verified",
+        verificationScore: 85,
         profileComplete: true,
       },
       {
+        userId: createdUsers[2]._id,
         name: "Rahul Node",
         email: "rahul@proconnect.test",
         role: "Backend Developer",
@@ -93,63 +304,14 @@ router.get("/seed", async (req, res) => {
         hourlyRate: 28,
         rating: 4.8,
         about: "Backend developer building scalable APIs and databases.",
+        location: "Hyderabad, India",
         socialLinks: ["https://linkedin.com/in/rahulnode"],
-        status: "approved",
+        verificationStatus: "verified",
+        verificationScore: 94,
         profileComplete: true,
       },
       {
-        name: "Dinesh Java",
-        email: "dinesh@proconnect.test",
-        role: "Java Backend Developer",
-        skills: ["Java", "Spring Boot", "MySQL", "REST API", "Hibernate"],
-        experienceYears: 5,
-        hourlyRate: 35,
-        rating: 4.9,
-        about: "Java backend developer with Spring Boot and enterprise application experience.",
-        socialLinks: ["https://linkedin.com/in/dineshjava"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Kavin PHP",
-        email: "kavin@proconnect.test",
-        role: "PHP Developer",
-        skills: ["PHP", "MySQL", "Laravel", "CRUD", "AJAX"],
-        experienceYears: 4,
-        hourlyRate: 24,
-        rating: 4.6,
-        about: "PHP developer building dynamic web applications and admin dashboards.",
-        socialLinks: ["https://linkedin.com/in/kavinphp"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Sanjay FullStack",
-        email: "sanjay@proconnect.test",
-        role: "Full Stack Developer",
-        skills: ["React", "Node.js", "MongoDB", "Express", "JavaScript"],
-        experienceYears: 5,
-        hourlyRate: 32,
-        rating: 4.9,
-        about: "Full stack developer building end-to-end web applications.",
-        socialLinks: ["https://linkedin.com/in/sanjayfullstack"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Nivetha MERN",
-        email: "nivetha@proconnect.test",
-        role: "MERN Stack Developer",
-        skills: ["MongoDB", "Express", "React", "Node.js", "Redux"],
-        experienceYears: 4,
-        hourlyRate: 30,
-        rating: 4.8,
-        about: "MERN stack developer for startups and e-commerce platforms.",
-        socialLinks: ["https://linkedin.com/in/nivethamern"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
+        userId: createdUsers[3]._id,
         name: "Priya UX",
         email: "priya@proconnect.test",
         role: "UI/UX Designer",
@@ -158,11 +320,62 @@ router.get("/seed", async (req, res) => {
         hourlyRate: 30,
         rating: 4.9,
         about: "Creative UI/UX designer focused on user-centered design.",
+        location: "Delhi, India",
         socialLinks: ["https://linkedin.com/in/priyaux"],
-        status: "approved",
+        verificationStatus: "verified",
+        verificationScore: 96,
         profileComplete: true,
       },
       {
+        userId: createdUsers[4]._id,
+        name: "Karthik AI",
+        email: "karthik@proconnect.test",
+        role: "AI Engineer",
+        skills: ["AI", "Machine Learning", "Python", "TensorFlow"],
+        experienceYears: 6,
+        hourlyRate: 40,
+        rating: 5,
+        about: "AI engineer building machine learning models and intelligent systems.",
+        location: "Pune, India",
+        socialLinks: ["https://linkedin.com/in/karthikai"],
+        verificationStatus: "verified",
+        verificationScore: 98,
+        profileComplete: true,
+      },
+      {
+        userId: createdUsers[5]._id,
+        name: "Sanjay FullStack",
+        email: "sanjay@proconnect.test",
+        role: "Full Stack Developer",
+        skills: ["React", "Node.js", "MongoDB", "Express", "JavaScript"],
+        experienceYears: 5,
+        hourlyRate: 32,
+        rating: 4.9,
+        about: "Full stack developer building complete web applications.",
+        location: "Bangalore, India",
+        socialLinks: ["https://linkedin.com/in/sanjayfullstack"],
+        verificationStatus: "verified",
+        verificationScore: 95,
+        profileComplete: true,
+      },
+      {
+        userId: createdUsers[6]._id,
+        name: "Nivetha MERN",
+        email: "nivetha@proconnect.test",
+        role: "MERN Stack Developer",
+        skills: ["MongoDB", "Express", "React", "Node.js", "Redux"],
+        experienceYears: 4,
+        hourlyRate: 30,
+        rating: 4.8,
+        about: "MERN developer working on startup and e-commerce projects.",
+        location: "Chennai, India",
+        socialLinks: ["https://linkedin.com/in/nivethamern"],
+        verificationStatus: "verified",
+        verificationScore: 90,
+        profileComplete: true,
+      },
+      {
+        userId: createdUsers[7]._id,
         name: "Meena Design",
         email: "meena@proconnect.test",
         role: "Graphic Designer",
@@ -170,290 +383,24 @@ router.get("/seed", async (req, res) => {
         experienceYears: 4,
         hourlyRate: 20,
         rating: 4.7,
-        about: "Graphic designer specializing in logos, posters, and branding kits.",
+        about: "Graphic designer specializing in logos and branding.",
+        location: "Kolkata, India",
         socialLinks: ["https://linkedin.com/in/meenadesign"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Karthik AI",
-        email: "karthik@proconnect.test",
-        role: "AI Engineer",
-        skills: ["AI", "Machine Learning", "Python", "TensorFlow", "Data Science"],
-        experienceYears: 6,
-        hourlyRate: 40,
-        rating: 5,
-        about: "AI engineer building machine learning models and intelligent systems.",
-        socialLinks: ["https://linkedin.com/in/karthikai"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Harini Data",
-        email: "harini@proconnect.test",
-        role: "Data Analyst",
-        skills: ["Python", "SQL", "Excel", "Power BI", "Data Visualization"],
-        experienceYears: 3,
-        hourlyRate: 27,
-        rating: 4.8,
-        about: "Data analyst working with dashboards, reports, and business insights.",
-        socialLinks: ["https://linkedin.com/in/harinidata"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Vikram Python",
-        email: "vikram@proconnect.test",
-        role: "Python Developer",
-        skills: ["Python", "Django", "Flask", "REST API", "PostgreSQL"],
-        experienceYears: 4,
-        hourlyRate: 29,
-        rating: 4.7,
-        about: "Python web developer building APIs and automation tools.",
-        socialLinks: ["https://linkedin.com/in/vikrampython"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Asha Mobile",
-        email: "asha@proconnect.test",
-        role: "Flutter Developer",
-        skills: ["Flutter", "Dart", "Firebase", "Android", "iOS"],
-        experienceYears: 3,
-        hourlyRate: 26,
-        rating: 4.8,
-        about: "Flutter developer for cross-platform mobile apps.",
-        socialLinks: ["https://linkedin.com/in/ashamobile"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Rohit Android",
-        email: "rohit@proconnect.test",
-        role: "Android Developer",
-        skills: ["Java", "Kotlin", "Android Studio", "Firebase", "XML"],
-        experienceYears: 4,
-        hourlyRate: 28,
-        rating: 4.7,
-        about: "Android developer building native mobile apps.",
-        socialLinks: ["https://linkedin.com/in/rohitandroid"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Manoj DevOps",
-        email: "manoj@proconnect.test",
-        role: "DevOps Engineer",
-        skills: ["Docker", "Kubernetes", "AWS", "CI/CD", "Linux"],
-        experienceYears: 5,
-        hourlyRate: 38,
-        rating: 4.9,
-        about: "DevOps engineer managing deployment pipelines and cloud infrastructure.",
-        socialLinks: ["https://linkedin.com/in/manojdevops"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Siva Cloud",
-        email: "siva@proconnect.test",
-        role: "Cloud Engineer",
-        skills: ["AWS", "Azure", "Cloud", "Linux", "Networking"],
-        experienceYears: 4,
-        hourlyRate: 36,
-        rating: 4.8,
-        about: "Cloud engineer experienced in AWS and Azure deployments.",
-        socialLinks: ["https://linkedin.com/in/sivacloud"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Anitha QA",
-        email: "anitha@proconnect.test",
-        role: "QA Tester",
-        skills: ["Manual Testing", "Automation Testing", "Selenium", "JIRA", "Bug Tracking"],
-        experienceYears: 4,
-        hourlyRate: 23,
-        rating: 4.7,
-        about: "QA engineer ensuring product quality through testing and bug tracking.",
-        socialLinks: ["https://linkedin.com/in/anithaqa"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Naren Secure",
-        email: "naren@proconnect.test",
-        role: "Cyber Security Analyst",
-        skills: ["Cyber Security", "Ethical Hacking", "Network Security", "Penetration Testing", "Linux"],
-        experienceYears: 5,
-        hourlyRate: 42,
-        rating: 4.9,
-        about: "Cyber security analyst focused on system protection and vulnerability assessment.",
-        socialLinks: ["https://linkedin.com/in/narensecure"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Divya Content",
-        email: "divya@proconnect.test",
-        role: "Content Writer",
-        skills: ["Content Writing", "Blog Writing", "SEO", "Copywriting", "Editing"],
-        experienceYears: 3,
-        hourlyRate: 18,
-        rating: 4.8,
-        about: "Content writer creating SEO blogs, website copy, and articles.",
-        socialLinks: ["https://linkedin.com/in/divyacontent"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Ajay Digital",
-        email: "ajay@proconnect.test",
-        role: "Digital Marketer",
-        skills: ["SEO", "Google Ads", "Social Media Marketing", "Analytics", "Content Strategy"],
-        experienceYears: 4,
-        hourlyRate: 25,
-        rating: 4.7,
-        about: "Digital marketer helping brands grow through SEO and paid campaigns.",
-        socialLinks: ["https://linkedin.com/in/ajaydigital"],
-        status: "approved",
-        profileComplete: true,
-      },
-      {
-        name: "Yuvan Chain",
-        email: "yuvan@proconnect.test",
-        role: "Blockchain Developer",
-        skills: ["Blockchain", "Solidity", "Web3", "Smart Contracts", "Ethereum"],
-        experienceYears: 4,
-        hourlyRate: 45,
-        rating: 4.8,
-        about: "Blockchain developer creating decentralized apps and smart contracts.",
-        socialLinks: ["https://linkedin.com/in/yuvanchain"],
-        status: "approved",
+        verificationStatus: "verified",
+        verificationScore: 88,
         profileComplete: true,
       },
     ];
 
-    const created = await Freelancer.insertMany(sample);
-    res.json({ seeded: created.length, freelancers: created });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+    console.log('Sample freelancers before insert:', sample.slice(0, 2).map(f => ({ userId: f.userId, name: f.name })));
 
-// ==========================
-// AI MATCH ROUTE
-// ==========================
-router.post("/match", async (req, res) => {
-  try {
-    const { clientText, budget, experience, desiredSkills } = req.body;
+    await Freelancer.insertMany(sample);
 
-    let candidates = await Freelancer.find({ status: "approved" });
-
-    if (!candidates.length) {
-      candidates = await Freelancer.find({});
-    }
-
-    const textLower = (clientText || "").toLowerCase();
-    const desired = (desiredSkills || []).map((s) => s.toLowerCase());
-
-    const scored = candidates
-      .map((fr) => {
-        let score = 0;
-        const skills = fr.skills || [];
-        const skillsLower = skills.map((s) => s.toLowerCase());
-
-        const matchedSkills = skills.filter((skill) =>
-          desired.includes(skill.toLowerCase())
-        );
-        score += matchedSkills.length * 30;
-
-        if (fr.role && textLower.includes(fr.role.toLowerCase())) {
-          score += 25;
-        }
-
-        for (const skill of skillsLower) {
-          if (textLower.includes(skill)) score += 10;
-        }
-
-        if (experience && fr.experienceYears >= experience) {
-          score += 15;
-        }
-
-        if (budget && fr.hourlyRate <= budget) {
-          score += 15;
-        }
-
-        if (fr.rating) {
-          score += Math.min(20, fr.rating * 4);
-        }
-
-        return {
-          freelancer: fr,
-          score,
-          matchedSkills,
-        };
-      })
-      .filter((x) => x.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 3);
-
-    const results = scored.map((x) => ({
-      freelancerId: x.freelancer._id,
-      name: x.freelancer.name,
-      email: x.freelancer.email,
-      role: x.freelancer.role,
-      score: x.score,
-      hourlyRate: x.freelancer.hourlyRate,
-      experienceYears: x.freelancer.experienceYears,
-      rating: x.freelancer.rating,
-      socialLinks: x.freelancer.socialLinks || [],
-      matchedSkills: x.matchedSkills,
-      skills: x.freelancer.skills || [],
-    }));
-
-    res.json({ query: clientText, matches: results });
-  } catch (err) {
-    console.error("MATCH ROUTE ERROR:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ==========================
-// GET FREELANCER BY ID
-// ==========================
-router.get("/:id", async (req, res) => {
-  try {
-    const freelancer = await Freelancer.findById(req.params.id);
-    if (!freelancer) return res.status(404).json({ message: "Freelancer not found" });
-    res.json(freelancer);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ==========================
-// UPDATE FREELANCER
-// ==========================
-router.put("/:id", async (req, res) => {
-  try {
-    const data = req.body;
-    data.profileComplete = Boolean(data.name && data.email && data.skills?.length);
-    const freelancer = await Freelancer.findByIdAndUpdate(req.params.id, data, { new: true });
-    if (!freelancer) return res.status(404).json({ message: "Freelancer not found" });
-    res.json(freelancer);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ==========================
-// DELETE FREELANCER
-// ==========================
-router.delete("/:id", async (req, res) => {
-  try {
-    const freelancer = await Freelancer.findByIdAndDelete(req.params.id);
-    if (!freelancer) return res.status(404).json({ message: "Freelancer not found" });
-    res.json({ message: "Freelancer deleted" });
+    res.status(201).json({
+      message: `${sample.length} sample freelancers and users created`,
+      freelancersCount: sample.length,
+      usersCount: createdUsers.length,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
